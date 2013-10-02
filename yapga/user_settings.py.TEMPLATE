@@ -1,0 +1,3 @@
+username = your name here
+password = gerrit http password here
+url = url for gerrit server here
