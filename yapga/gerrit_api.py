@@ -92,11 +92,15 @@ def changes(conn, queries=None, batch_size=100):
 
 
 class Revision:
-    def __init__(self, conn, change_id, id, data):
+    def __init__(self, conn, change_id, rev_id, data):
         self.conn = conn
         self.change_id = change_id
-        self.id = id
+        self.id = rev_id
         self.data = data
 
     def __getattr__(self, name):
         return self.data[name]
+
+    def size(self):
+        return sum([f.get('lines_inserted', 0) + f.get('lines_deleted', 0)
+                    for f in self.files.values()])

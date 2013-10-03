@@ -20,11 +20,20 @@ def list_all_revisions(url, username=None, password=None):
                              username,
                              password)
 
-    for c in itertools.islice(changes(conn), 100):
-        print('change-id:', c.id)
+    data = []
+    for c in itertools.islice(changes(conn, batch_size=500), 10000):
+        revs = list(c.revisions)
+        if revs:
+            data.append([len(revs), revs[0].size()])
 
-        for r in c.revisions:
-            print(r.id, r.data)
+    data = list(zip(*data))
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.scatter(data[1], data[0])
+    ax.set_xscale('log')
+    plt.savefig('android.png')
 
 if __name__ == '__main__':
     baker.run()
