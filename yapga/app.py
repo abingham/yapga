@@ -32,6 +32,9 @@ def list_changes(url, username=None, password=None):
 
 @baker.command
 def rev_size_vs_count(filename, outfile):
+    """Log-x scatter of patch size vs. # of commits
+    to a review.
+    """
     with open(filename, 'r') as f:
         changes = json.loads(f.read())
 
@@ -44,9 +47,9 @@ def rev_size_vs_count(filename, outfile):
     data = list(zip(*data))
 
     import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.scatter(data[1], data[0])
+    plt.scatter(data[1], data[0])
+    plt.xscale('log')
+    plt.xlim(1, max(data[1]))
     plt.savefig(outfile)
 
 if __name__ == '__main__':
