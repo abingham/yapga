@@ -42,36 +42,10 @@ def create_connection(uri, username=None, password=None):
     return Connection(uri, opener)
 
 
-class JSONObject:
-    def __init__(self, data):
-        self.data = data
-
-    def __getattr__(self, name):
-        return self.data[name]
-
-
-class Change:
-    def __init__(self, conn, data):
-        self.conn = conn
-        self.data = data
-
-    def __getattr__(self, name):
-        return self.data[name]
-
-    @property
-    def revisions(self):
-        revs = self.data.get('revisions', {})
-        for rev_id, rev_data in revs.items():
-            yield Revision(self.conn, self.id, rev_id, rev_data)
-
-    def __str__(self):
-        return 'Change(id={})'.format(self.id)
-
-    def __repr__(self):
-        return str(self)
-
-
-def changes(conn, queries=None, batch_size=100):
+def fetch_changes(conn, queries=None, batch_size=100):
+    """Generate a sequence of ChangeInfo structs (see: gerrit REST API
+    documentation.)
+    """
     if queries is None:
         queries = ['q=status:merged',
                    'o=ALL_REVISIONS',
@@ -81,19 +55,46 @@ def changes(conn, queries=None, batch_size=100):
     changes = conn.req(['changes'],
                        queries=queries)
     for c in changes:
-        yield Change(conn, c)
+        yield c
 
     while changes[-1].get('_more_changes', False):
         changes = conn.req(
             ['changes'],
             queries=queries + ['N={}'.format(changes[-1]['_sortkey'])])
         for c in changes:
-            yield Change(conn, c)
+            yield c
+
+
+class JSONObject:
+    def __init__(self, data):
+        self.data = data
+
+    def __getattr__(self, name):
+        return self.data[name]
+
+
+class Change:
+    def __init__(self, data):
+        self.data = data
+
+    def __getattr__(self, name):
+        return self.data[name]
+
+    @property
+    def revisions(self):
+        revs = self.data.get('revisions', {})
+        for rev_id, rev_data in revs.items():
+            yield Revision(self.id, rev_id, rev_data)
+
+    def __str__(self):
+        return 'Change(id={})'.format(self.id)
+
+    def __repr__(self):
+        return str(self)
 
 
 class Revision:
-    def __init__(self, conn, change_id, rev_id, data):
-        self.conn = conn
+    def __init__(self, change_id, rev_id, data):
         self.change_id = change_id
         self.id = rev_id
         self.data = data
@@ -103,4 +104,4 @@ class Revision:
 
     def size(self):
         return sum([f.get('lines_inserted', 0) + f.get('lines_deleted', 0)
-                    for f in self.files.values()])
+                    for f in self.data.get('files', {}).values()])
