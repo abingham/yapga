@@ -8,21 +8,12 @@ log = logging.getLogger()
 
 
 class Connection:
-    def __init__(self, uri, username, password):
+    def __init__(self, uri, opener):
         self.uri = uri
-        self.username = username
-        self.password = password
-
-        # Create an auth-handler for our user
-        auth_handler = urllib.request.HTTPDigestAuthHandler()
-        auth_handler.add_password(realm='Gerrit Code Review',
-                                  uri=uri,
-                                  user=username,
-                                  passwd=password)
-        self.opener = urllib.request.build_opener(auth_handler)
+        self.opener = opener
 
     def req(self, path, queries=None):
-        url = '{}/a/{}/'.format(self.uri,
+        url = '{}/{}/'.format(self.uri,
                              '/'.join(path))
         if queries:
             url += '?{}'.format('&'.join(queries))
@@ -36,8 +27,19 @@ class Connection:
         return json.loads(data)
 
 
-def create_connection(uri, username, password):
-    return Connection(uri, username, password)
+def create_connection(uri, username=None, password=None):
+    handlers = []
+    if username is not None:
+        # Create an auth-handler for our user
+        auth_handler = urllib.request.HTTPDigestAuthHandler()
+        auth_handler.add_password(realm='Gerrit Code Review',
+                                  uri=uri,
+                                  user=username,
+                                  passwd=password)
+        handlers.append(auth_handler)
+
+    opener = urllib.request.build_opener(*handlers)
+    return Connection(uri, opener)
 
 
 class JSONObject:
@@ -48,10 +50,19 @@ class JSONObject:
         return self.data[name]
 
 
-class Change(JSONObject):
+class Change:
+    def __init__(self, conn, data):
+        self.conn = conn
+        self.data = data
+
+    def __getattr__(self, name):
+        return self.data[name]
+
     @property
     def revisions(self):
-        return [Revision(r) for r in self.data.get('revisions', [])]
+        revs = self.data.get('revisions', {})
+        for rev_id, rev_data in revs.items():
+            yield Revision(self.conn, self.id, rev_id, rev_data)
 
     def __str__(self):
         return 'Change(id={})'.format(self.id)
@@ -59,48 +70,61 @@ class Change(JSONObject):
     def __repr__(self):
         return str(self)
 
-def changes(conn, queries=None):
+
+def changes(conn, queries=None, batch_size=100):
     if queries is None:
         queries = ['q=status:merged',
                    'o=ALL_REVISIONS',
-                   'o=ALL_COMMITS',
-                   'n=100']
+                   'o=ALL_FILES',
+                   'n={}'.format(batch_size)]
 
-    rslt = []
-    changes = conn.req(['changes'], queries=queries)
+    changes = conn.req(['changes'],
+                       queries=queries)
+    for c in changes:
+        yield Change(conn, c)
 
-    rslt.extend([Change(c) for c in changes])
     while changes[-1].get('_more_changes', False):
         changes = conn.req(
             ['changes'],
             queries=queries + ['N={}'.format(changes[-1]['_sortkey'])])
-        rslt.extend([Change(c) for c in changes])
+        for c in changes:
+            yield Change(conn, c)
 
-    return rslt
 
+class Revision:
+    def __init__(self, conn, change_id, id, data):
+        self.conn = conn
+        self.change_id = change_id
+        self.id = id
+        self.data = data
 
-class Revision(JSONObject):
-    pass
+    def __getattr__(self, name):
+        return self.data[name]
 
 
 def list_changes():
     import yapga.user_settings
-    conn = Connection(yapga.user_settings.url,
-                      yapga.user_settings.username,
-                      yapga.user_settings.password)
-    for c in changes(conn):
-        if len(c.data['revisions']) == 1:
-            print(c)
-            return
+    import itertools
+    conn = create_connection(yapga.user_settings.url,
+                             yapga.user_settings.username,
+                             yapga.user_settings.password)
+    for c in itertools.islice(changes(conn), 100):
+        print(c.data)
 
 
 def list_all_revisions():
-    conn = Connection(yapga.user_settings.url)
-    for c in conn.changes():
+    import yapga.user_settings
+    import itertools
+
+    conn = create_connection(yapga.user_settings.url,
+                             #yapga.user_settings.username,
+                             #yapga.user_settings.password
+                             )
+    for c in itertools.islice(changes(conn), 100):
         print('change-id:', c.id)
 
         for r in c.revisions:
-            print(r)
+            print(r.id, r.data)
 
 if __name__ == '__main__':
-    list_changes()
+    list_all_revisions()
