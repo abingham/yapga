@@ -30,6 +30,8 @@ setup(
     setup_requires=[],
     install_requires=[
         'baker',
+        'matplotlib',
+        'numpy',
     ],
 
     entry_points={
