@@ -103,8 +103,6 @@ def rev_count_hist(filename, outfile):
 
     log.info('Scanning {} changes'.format(len(changes)))
 
-    print(list(filter(lambda x: x > 1, (len(list(c.revisions)) for c in map(Change, changes)))))
-
     vals = [len(list(Change(c).revisions)) for c in changes]
 
     import matplotlib.pyplot as plt
