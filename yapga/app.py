@@ -20,6 +20,11 @@ def fetch(url,
     If `username` and `password` are supplied, then they are used for
     digest authentication with the server.
     """
+    if count is not None:
+        count = int(count)
+    if batch_size is not None:
+        batch_size = int(batch_size)
+
     conn = create_connection(url, username, password)
     changes = list(
         itertools.islice(
@@ -64,6 +69,7 @@ def rev_size_vs_count(filename, outfile):
     #plt.savefig(outfile)
     plt.show()
 
+
 @baker.command
 def rev_count_hist(filename, outfile):
     with open(filename, 'r') as f:
@@ -74,6 +80,7 @@ def rev_count_hist(filename, outfile):
     import matplotlib.pyplot as plt
     plt.hist(vals, bins=30)
     plt.savefig(outfile)
+
 
 if __name__ == '__main__':
     baker.run()
