@@ -42,7 +42,7 @@ def create_connection(uri, username=None, password=None):
     return Connection(uri, opener)
 
 
-def fetch_changes(conn, queries=None, batch_size=100):
+def fetch_changes(conn, queries=None):
     """Generate a sequence of ChangeInfo structs (see: gerrit REST API
     documentation.)
     """
@@ -50,7 +50,7 @@ def fetch_changes(conn, queries=None, batch_size=100):
         queries = ['q=status:merged',
                    'o=ALL_REVISIONS',
                    'o=ALL_FILES',
-                   'n={}'.format(batch_size)]
+                   'n=500']
 
     changes = conn.req(['changes'],
                        queries=queries)

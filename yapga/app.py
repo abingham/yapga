@@ -1,9 +1,13 @@
 import itertools
 import json
+import logging
 
 import baker
 
 from yapga import create_connection, Change, fetch_changes
+import yapga.util
+
+log = logging.getLogger('yapga')
 
 
 @baker.command
@@ -12,7 +16,9 @@ def fetch(url,
           username=None,
           password=None,
           count=None,
-          batch_size=500):
+          batch_size=500,
+          start_at=None,
+          status='merged'):
     """Fetch up to `count` changes from the gerrit server at `url`,
     grabbing them in batches of `batch_size`. The results are saved as
     a JSON list of `ChangeInfo` objects into `filename`.
@@ -20,17 +26,37 @@ def fetch(url,
     If `username` and `password` are supplied, then they are used for
     digest authentication with the server.
     """
+    queries = ['q=status:{}'.format(status),
+               'o=ALL_REVISIONS',
+               'o=ALL_FILES',
+               'o=ALL_COMMITS',
+               'n={}'.format(batch_size)]
+
+    if start_at is not None:
+        queries.append('N={}'.format(start_at))
+
     if count is not None:
         count = int(count)
-    if batch_size is not None:
-        batch_size = int(batch_size)
 
     conn = create_connection(url, username, password)
-    changes = list(
-        itertools.islice(
-            fetch_changes(conn, batch_size=batch_size), count))
-    with open(filename, 'w') as f:
-        f.write(json.dumps(changes))
+    chunks = yapga.util.chunks(
+        itertools.islice(fetch_changes(conn, queries=queries),
+                         count),
+        batch_size)
+
+    changes = []
+    try:
+        for chunk in (list(c) for c in chunks):
+            if not chunk:
+                break
+            changes.extend(chunk)
+    except Exception:
+        log.exception('Error fetching results. Partial results will be saved to {}'.format(filename))
+    finally:
+        log.info('{} changes retrieved.'.format(len(changes)))
+        if changes:
+            with open(filename, 'w') as f:
+                f.write(json.dumps(changes))
 
 
 @baker.command
@@ -74,6 +100,10 @@ def rev_size_vs_count(filename, outfile):
 def rev_count_hist(filename, outfile):
     with open(filename, 'r') as f:
         changes = json.loads(f.read())
+
+    log.info('Scanning {} changes'.format(len(changes)))
+
+    print(list(filter(lambda x: x > 1, (len(list(c.revisions)) for c in map(Change, changes)))))
 
     vals = [len(list(Change(c).revisions)) for c in changes]
 
