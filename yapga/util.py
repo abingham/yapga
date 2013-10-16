@@ -1,4 +1,10 @@
 import itertools
+import json
+
+
+def load_changes(filename):
+    with open(filename, 'r') as f:
+        return json.loads(f.read())
 
 
 def chunks(it, size):

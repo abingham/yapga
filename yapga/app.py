@@ -63,8 +63,7 @@ def fetch(url,
 def list_changes(filename):
     """List all of the change-ids in `filename`.
     """
-    with open(filename, 'r') as f:
-        changes = json.loads(f.read())
+    changes = yapga.util.load_changes(filename)
     for c in (Change(d) for d in changes):
         print(c.id)
 
@@ -74,8 +73,7 @@ def rev_size_vs_count(filename, outfile):
     """Log-x scatter of patch size vs. # of commits
     to a review.
     """
-    with open(filename, 'r') as f:
-        changes = json.loads(f.read())
+    changes = yapga.util.load_changes(filename)
 
     data = []
     for c in (Change(d) for d in changes):
@@ -98,8 +96,7 @@ def rev_size_vs_count(filename, outfile):
 
 @baker.command
 def rev_count_hist(filename, outfile):
-    with open(filename, 'r') as f:
-        changes = json.loads(f.read())
+    changes = yapga.util.load_changes(filename)
 
     log.info('Scanning {} changes'.format(len(changes)))
 
@@ -112,8 +109,7 @@ def rev_count_hist(filename, outfile):
 
 @baker.command
 def changes_by_owner(filename):
-    with open(filename, 'r') as f:
-        changes = json.loads(f.read())
+    changes = yapga.util.load_changes(filename)
 
     counts = {}
 
