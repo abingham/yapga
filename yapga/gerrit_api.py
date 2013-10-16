@@ -86,11 +86,39 @@ class Change:
         for rev_id, rev_data in revs.items():
             yield Revision(self.id, rev_id, rev_data)
 
+    @property
+    def owner(self):
+        return Account(self.data['owner'])
+
     def __str__(self):
         return 'Change(id={})'.format(self.id)
 
     def __repr__(self):
         return str(self)
+
+
+class Account:
+    def __init__(self, data):
+        self.data = data
+
+    @property
+    def id(self):
+        return self.data['_account_id']
+
+    @property
+    def name(self):
+        return self.data.get('name', 'UNKNOWN')
+
+    @property
+    def email(self):
+        return self.data.get('email', 'UNKNOWN')
+
+    def __repr__(self):
+        return 'Account(name="{}", email="{}")'.format(
+            self.name, self.email)
+
+    def __str__(self):
+        return repr(self)
 
 
 class Revision:

@@ -110,5 +110,21 @@ def rev_count_hist(filename, outfile):
     plt.savefig(outfile)
 
 
+@baker.command
+def changes_by_owner(filename):
+    with open(filename, 'r') as f:
+        changes = json.loads(f.read())
+
+    counts = {}
+
+    for change in (Change(c) for c in changes):
+        o = change.owner.name
+        counts[o] = counts.get(o, 0) + 1
+
+    counts = sorted(counts.items(), key=lambda x: x[1])
+    for c in counts:
+        print((c[1] // 10) * '*', c[0])
+
+
 if __name__ == '__main__':
     baker.run()
