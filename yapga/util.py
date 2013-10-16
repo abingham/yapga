@@ -1,11 +1,15 @@
 import itertools
 import json
 
+from yapga.gerrit_api import Change
+
 
 def load_changes(filename):
     with open(filename, 'r') as f:
-        return json.loads(f.read())
+        changes = json.loads(f.read())
 
+    for c in changes:
+        yield Change(c)
 
 def chunks(it, size):
     """Return `size` sized iterable chunks of the iterable `it`.

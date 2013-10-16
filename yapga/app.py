@@ -63,8 +63,7 @@ def fetch(url,
 def list_changes(filename):
     """List all of the change-ids in `filename`.
     """
-    changes = yapga.util.load_changes(filename)
-    for c in (Change(d) for d in changes):
+    for c in yapga.util.load_changes(filename):
         print(c.id)
 
 
@@ -73,10 +72,9 @@ def rev_size_vs_count(filename, outfile):
     """Log-x scatter of patch size vs. # of commits
     to a review.
     """
-    changes = yapga.util.load_changes(filename)
-
     data = []
-    for c in (Change(d) for d in changes):
+
+    for c in yapga.util.load_changes(filename):
         revs = list(c.revisions)
         if revs:
             data.append([len(revs), revs[0].size()])
@@ -96,11 +94,11 @@ def rev_size_vs_count(filename, outfile):
 
 @baker.command
 def rev_count_hist(filename, outfile):
-    changes = yapga.util.load_changes(filename)
+    changes = list(yapga.util.load_changes(filename))
 
     log.info('Scanning {} changes'.format(len(changes)))
 
-    vals = [len(list(Change(c).revisions)) for c in changes]
+    vals = [len(list(c.revisions)) for c in changes]
 
     import matplotlib.pyplot as plt
     plt.hist(vals, bins=30)
@@ -109,11 +107,9 @@ def rev_count_hist(filename, outfile):
 
 @baker.command
 def changes_by_owner(filename):
-    changes = yapga.util.load_changes(filename)
-
     counts = {}
 
-    for change in (Change(c) for c in changes):
+    for change in yapga.util.load_changes(filename):
         o = change.owner.name
         counts[o] = counts.get(o, 0) + 1
 
@@ -124,8 +120,7 @@ def changes_by_owner(filename):
 
 @baker.command
 def list_messages(filename):
-    changes = yapga.util.load_changes(filename)
-    for change in (Change(c) for c in changes):
+    for change in yapga.util.load_changes(filename):
         print(list(change.messages))
 
 
