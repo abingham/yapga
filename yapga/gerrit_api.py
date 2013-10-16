@@ -87,6 +87,12 @@ class Change:
             yield Revision(self.id, rev_id, rev_data)
 
     @property
+    def messages(self):
+        msgs = self.data.get('messages', [])
+        for msg in msgs:
+            yield ChangeMessage(msg)
+
+    @property
     def owner(self):
         return Account(self.data['owner'])
 
@@ -119,6 +125,21 @@ class Account:
 
     def __str__(self):
         return repr(self)
+
+
+class ChangeMessage:
+    def __init__(self, data):
+        self.data = data
+        self.id = self.data.get('id', 'UNKNOWN')
+
+        try:
+            self.author = Account(self.data['author'])
+        except KeyError:
+            self.author = None
+
+        self.date = self.data['data']
+        self.message = self.data['message']
+        self.revision_number = self.data.get('_revision_number', 0)
 
 
 class Revision:

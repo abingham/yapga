@@ -122,5 +122,12 @@ def changes_by_owner(filename):
         print((c[1] // 10) * '*', c[0])
 
 
+@baker.command
+def list_messages(filename):
+    changes = yapga.util.load_changes(filename)
+    for change in (Change(c) for c in changes):
+        print(list(change.messages))
+
+
 if __name__ == '__main__':
     baker.run()
