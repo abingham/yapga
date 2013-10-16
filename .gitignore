@@ -1,5 +1,6 @@
 yapga/user_settings.py
 *.py[cod]
+venv*
 
 # C extensions
 *.so
