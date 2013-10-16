@@ -4,7 +4,7 @@ import logging
 
 import baker
 
-from yapga import create_connection, Change, fetch_changes
+import yapga
 import yapga.util
 
 log = logging.getLogger('yapga')
@@ -38,9 +38,9 @@ def fetch(url,
     if count is not None:
         count = int(count)
 
-    conn = create_connection(url, username, password)
+    conn = yapga.create_connection(url, username, password)
     chunks = yapga.util.chunks(
-        itertools.islice(fetch_changes(conn, queries=queries),
+        itertools.islice(yapga.fetch_changes(conn, queries=queries),
                          count),
         batch_size)
 
@@ -57,6 +57,27 @@ def fetch(url,
         if changes:
             with open(filename, 'w') as f:
                 f.write(json.dumps(changes))
+
+
+@baker.command
+def fetch_reviewers(change_file,
+                    url,
+                    filename,
+                    username=None,
+                    password=None):
+    """Fetch all reviewers for the changes in `change_file` from `url`. The
+    results are written to `filename` as a json map from change-id to
+    review-list.
+    """
+
+    conn = yapga.create_connection(url, username, password)
+
+    data = {}
+    for c in yapga.util.load_changes(change_file):
+        data[c.id] = yapga.fetch_reviewers(conn, c.id)
+
+    with open(filename, 'w') as f:
+        f.write(json.dumps(data))
 
 
 @baker.command
@@ -123,6 +144,12 @@ def list_messages(filename):
     for change in yapga.util.load_changes(filename):
         print(list(change.messages))
 
+
+@baker.command
+def list_reviewer(filename):
+    for change in yapga.util.load_changes(filename):
+        for r in change.reviewers:
+            print(r.name)
 
 if __name__ == '__main__':
     baker.run()

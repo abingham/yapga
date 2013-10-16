@@ -65,6 +65,11 @@ def fetch_changes(conn, queries=None):
             yield c
 
 
+def fetch_reviewers(conn, change_id):
+    reviewers = conn.req(['changes', change_id, 'reviewers'])
+    return reviewers
+
+
 class JSONObject:
     def __init__(self, data):
         self.data = data
@@ -125,6 +130,16 @@ class Account:
 
     def __str__(self):
         return repr(self)
+
+
+class Reviewer(Account):
+    @property
+    def kind(self):
+        return self.data.get('kind', 'UNKNOWN')
+
+    @property
+    def approvals(self):
+        return self.data.get('approvals', {})
 
 
 class ChangeMessage:
