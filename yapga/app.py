@@ -4,6 +4,9 @@ import logging
 
 import baker
 
+import matplotlib
+matplotlib.use('TkAgg')
+
 import yapga
 import yapga.util
 
@@ -74,7 +77,10 @@ def fetch_reviewers(change_file,
 
     data = {}
     for c in yapga.util.load_changes(change_file):
-        data[c.id] = yapga.fetch_reviewers(conn, c.id)
+        try:
+            data[c.id] = yapga.fetch_reviewers(conn, c.id)
+        except Exception:
+            log.exception('Error fetching reviewers for change {}'.format(c.id))
 
     with open(filename, 'w') as f:
         f.write(json.dumps(data))
@@ -89,7 +95,7 @@ def list_changes(filename):
 
 
 @baker.command
-def rev_size_vs_count(filename, outfile):
+def rev_size_vs_count(filename, outfile=None):
     """Log-x scatter of patch size vs. # of commits
     to a review.
     """
@@ -109,12 +115,15 @@ def rev_size_vs_count(filename, outfile):
     plt.scatter(data[1], data[0], marker=',')
     plt.xscale('log')
     plt.xlim(1, max(data[1]))
-    #plt.savefig(outfile)
+
+    if outfile:
+        plt.savefig(outfile)
+
     plt.show()
 
 
 @baker.command
-def rev_count_hist(filename, outfile):
+def rev_count_hist(filename, outfile=None):
     changes = list(yapga.util.load_changes(filename))
 
     log.info('Scanning {} changes'.format(len(changes)))
@@ -123,7 +132,11 @@ def rev_count_hist(filename, outfile):
 
     import matplotlib.pyplot as plt
     plt.hist(vals, bins=30)
-    plt.savefig(outfile)
+
+    if outfile:
+        plt.savefig(outfile)
+
+    plt.show()
 
 
 @baker.command
@@ -146,7 +159,7 @@ def list_messages(filename):
 
 
 @baker.command
-def list_reviewer(filename):
+def list_reviewers(filename):
     for change in yapga.util.load_changes(filename):
         for r in change.reviewers:
             print(r.name)
