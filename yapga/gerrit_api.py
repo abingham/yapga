@@ -66,9 +66,7 @@ def fetch_changes(conn, queries=None):
 
 
 def fetch_reviewers(conn, change_id):
-    reviewers = conn.req(['changes', change_id, 'reviewers'])
-    return reviewers
-
+    return conn.req(['changes', change_id, 'reviewers'])
 
 class JSONObject:
     def __init__(self, data):

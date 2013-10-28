@@ -7,6 +7,8 @@ import baker
 import matplotlib
 matplotlib.use('TkAgg')
 
+import numpy as np
+
 import yapga
 import yapga.util
 
@@ -163,6 +165,57 @@ def list_reviewers(filename):
     for change in yapga.util.load_changes(filename):
         for r in change.reviewers:
             print(r.name)
+
+
+@baker.command
+def compare_reviewers(changes, reviews):
+    # http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
+    reviews = dict(yapga.util.load_reviews(reviews))
+    changes = list(yapga.util.load_changes(changes))
+    change_owners = [c.owner.email for c in changes]
+
+
+    all_review_emails = set(itertools.chain(
+        change_owners,
+        (r.email for _, revs in reviews.items() for r in revs)))
+
+    id_map = dict(
+        zip(all_review_emails, itertools.count()))
+
+    print('id-map constructed')
+
+    data = np.zeros((len(id_map), len(id_map)))
+
+    for change in changes:
+        owner_idx = id_map[change.owner.email]
+        for reviewer in reviews.get(change.id, []):
+            reviewer_idx = id_map[reviewer.email]
+            data[(reviewer_idx, owner_idx)] += 1
+
+    print('array populated')
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+
+    print('calculating heatmap...')
+    heatmap = ax.pcolor(data)
+    print('heatmap calculated')
+
+    ordered_emails = [x[0] for x in sorted(id_map.items(), key=lambda i: i[1])]
+    print('addresses sorted')
+
+    #ax.set_xticklabels(ordered_emails)
+    #ax.set_yticklabels(ordered_emails)
+
+    print('showing')
+    plt.show()
+
+        # try:
+        #     review = reviews[change.id]
+        #     print(review)
+        # except KeyError:
+        #     pass
+
 
 if __name__ == '__main__':
     baker.run()
