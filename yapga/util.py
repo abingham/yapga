@@ -1,14 +1,32 @@
+import bz2
+import contextlib
+import gzip
 import itertools
 import json
+import os
+import zipfile
 
 from yapga.gerrit_api import Change, Reviewer
 
+
+extension_map = {
+    '.gz': gzip.open,
+    '.zip': zipfile.ZipFile,
+    '.bz2': bz2.open,
+}
+
+
+@contextlib.contextmanager
+def open_file(filename, mode):
+    opener = extension_map.get(os.path.splitext(filename)[1], open)
+    with opener(filename, mode=mode) as f:
+        yield f
 
 def load_changes(filename):
     """Read changes from `filename` and generate a sequence of `Change`
     objects.
     """
-    with open(filename, 'r') as f:
+    with open_file(filename, 'r') as f:
         changes = json.loads(f.read())
 
     for c in changes:
@@ -19,7 +37,7 @@ def load_reviews(filename):
     """Read reviews from `filename` and generates a sequence of
     `(commit-id, [Reviewer, . . .])` tuples.
     """
-    with open(filename, 'r') as f:
+    with open_file(filename, 'r') as f:
         data = json.loads(f.read())
     for cid, revs in data.items():
         yield (cid, [Reviewer(r) for r in revs])
