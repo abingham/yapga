@@ -169,30 +169,30 @@ def list_reviewers(filename):
 
 @baker.command
 def compare_reviewers(changes, reviews):
+    """Heatmap showing how often reviewers review change owners.
+
+    Not very useful right now. Need to weed out the useless,
+    one-offers and stuff.
+    """
     # http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
     reviews = dict(yapga.util.load_reviews(reviews))
     changes = list(yapga.util.load_changes(changes))
-    change_owners = [c.owner.email for c in changes]
 
+    owner_map = dict(
+        zip(set(c.owner.email for c in changes),
+            itertools.count()))
 
-    all_review_emails = set(itertools.chain(
-        change_owners,
-        (r.email for _, revs in reviews.items() for r in revs)))
+    reviewer_map = dict(
+        zip(set(r.email for revs in reviews.values() for r in revs),
+            itertools.count()))
 
-    id_map = dict(
-        zip(all_review_emails, itertools.count()))
-
-    print('id-map constructed')
-
-    data = np.zeros((len(id_map), len(id_map)))
+    data = np.zeros((len(reviewer_map), len(owner_map)))
 
     for change in changes:
-        owner_idx = id_map[change.owner.email]
+        owner_idx = owner_map[change.owner.email]
         for reviewer in reviews.get(change.id, []):
-            reviewer_idx = id_map[reviewer.email]
+            reviewer_idx = reviewer_map[reviewer.email]
             data[(reviewer_idx, owner_idx)] += 1
-
-    print('array populated')
 
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots()
@@ -201,13 +201,11 @@ def compare_reviewers(changes, reviews):
     heatmap = ax.pcolor(data)
     print('heatmap calculated')
 
-    ordered_emails = [x[0] for x in sorted(id_map.items(), key=lambda i: i[1])]
-    print('addresses sorted')
+    # ordered_emails = [x[0] for x in sorted(id_map.items(), key=lambda i: i[1])]
 
     #ax.set_xticklabels(ordered_emails)
     #ax.set_yticklabels(ordered_emails)
 
-    print('showing')
     plt.show()
 
         # try:
