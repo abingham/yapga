@@ -36,6 +36,7 @@ def fetch(url,
                'o=ALL_REVISIONS',
                'o=ALL_FILES',
                'o=ALL_COMMITS',
+               'o=MESSAGES',
                'n={}'.format(batch_size)]
 
     if start_at is not None:
@@ -234,6 +235,12 @@ def changes_vs_reviews(changes, reviews):
     plt.scatter([x[0] for x in data.values()],
                 [x[1] for x in data.values()])
     plt.show()
+
+@baker.command
+def word_count(changes):
+    changes = list(yapga.util.load_changes(changes))
+    words = (w for c in changes for m in c.messages for w in m.split())
+    print(list(words))
 
 if __name__ == '__main__':
     baker.run()
