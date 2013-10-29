@@ -1,3 +1,4 @@
+import collections
 import itertools
 import json
 import logging
@@ -214,6 +215,25 @@ def compare_reviewers(changes, reviews):
         # except KeyError:
         #     pass
 
+
+@baker.command
+def changes_vs_reviews(changes, reviews):
+    """Scatter of #changes vs. #reviews for a given user.
+    """
+    reviews = dict(yapga.util.load_reviews(reviews))
+    changes = list(yapga.util.load_changes(changes))
+
+    data = collections.defaultdict(lambda: [0, 0])
+    for change in changes:
+        data[change.owner.email][0] += 1
+
+    for r in itertools.chain(*reviews.values()):
+        data[r.email][1] += 1
+
+    import matplotlib.pyplot as plt
+    plt.scatter([x[0] for x in data.values()],
+                [x[1] for x in data.values()])
+    plt.show()
 
 if __name__ == '__main__':
     baker.run()
