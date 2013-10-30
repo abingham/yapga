@@ -150,7 +150,7 @@ class ChangeMessage:
         except KeyError:
             self.author = None
 
-        self.date = self.data['data']
+        self.date = self.data['date']
         self.message = self.data['message']
         self.revision_number = self.data.get('_revision_number', 0)
 

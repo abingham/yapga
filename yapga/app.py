@@ -236,10 +236,11 @@ def changes_vs_reviews(changes, reviews):
                 [x[1] for x in data.values()])
     plt.show()
 
+
 @baker.command
 def word_count(changes):
     changes = list(yapga.util.load_changes(changes))
-    words = (w for c in changes for m in c.messages for w in m.split())
+    words = (w for c in changes for m in c.messages for w in m.message.split())
     print(list(words))
 
 if __name__ == '__main__':
