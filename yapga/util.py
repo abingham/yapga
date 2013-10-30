@@ -37,7 +37,7 @@ def load_reviews(filename):
     """Read reviews from `filename` and generates a sequence of
     `(commit-id, [Reviewer, . . .])` tuples.
     """
-    with open_file(filename, 'r') as f:
+    with open_file(filename, 'rt') as f:
         data = json.loads(f.read())
     for cid, revs in data.items():
         yield (cid, [Reviewer(r) for r in revs])
