@@ -26,7 +26,7 @@ def load_changes(filename):
     """Read changes from `filename` and generate a sequence of `Change`
     objects.
     """
-    with open_file(filename, 'r') as f:
+    with open_file(filename, 'rt') as f:
         changes = json.loads(f.read())
 
     for c in changes:
