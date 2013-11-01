@@ -10,6 +10,22 @@ def data_file_path(filename):
     return os.path.join(data_dir, filename)
 
 
+simple_change_attributes = [
+    'branch',
+    'change_id',
+    'created',
+    'current_revision',
+    'id',
+    'kind',
+    '_number',
+    'project',
+    '_sortkey',
+    'status',
+    'subject',
+    'updated'
+]
+
+
 class APITests(unittest.TestCase):
     def setUp(self):
         self.changes = list(
@@ -17,4 +33,16 @@ class APITests(unittest.TestCase):
                 data_file_path('basic_changes.json')))
 
     def test_smoke_test(self):
+        """Just kicking the tires."""
         self.assertEqual(len(self.changes), 2)
+
+    def test_changes(self):
+        for change in self.changes:
+            # TODO: revisions
+            # TODO: messages
+            # TODO: owner
+
+            for name in simple_change_attributes:
+                self.assertEqual(
+                    getattr(change, name),
+                    change.data[name])
