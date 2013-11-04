@@ -58,7 +58,10 @@ def fetch(url,
                 break
             changes.extend(chunk)
     except Exception:
-        log.exception('Error fetching results. Partial results will be saved to {}'.format(filename))
+        log.exception(
+            'Error fetching results. Partial results '
+            'will be saved to {}'.format(
+                filename))
     finally:
         log.info('{} changes retrieved.'.format(len(changes)))
         if changes:
@@ -129,6 +132,7 @@ def rev_size_vs_count(filename, outfile=None):
 
 @baker.command
 def rev_count_hist(filename, outfile=None):
+    "Histogram of number of revision per change."
     changes = list(yapga.util.load_changes(filename))
 
     log.info('Scanning {} changes'.format(len(changes)))
@@ -146,6 +150,7 @@ def rev_count_hist(filename, outfile=None):
 
 @baker.command
 def changes_by_owner(filename):
+    "Simple histogram of change count by owners."
     counts = {}
 
     for change in yapga.util.load_changes(filename):
@@ -159,12 +164,14 @@ def changes_by_owner(filename):
 
 @baker.command
 def list_messages(filename):
+    "List all of the change messages in a changes file."
     for change in yapga.util.load_changes(filename):
         print(list(change.messages))
 
 
 @baker.command
 def list_reviewers(filename):
+    "List all of the reviewers in a reviews file."
     for change in yapga.util.load_changes(filename):
         for r in change.reviewers:
             print(r.name)
@@ -201,7 +208,7 @@ def compare_reviewers(changes, reviews):
     fig, ax = plt.subplots()
 
     print('calculating heatmap...')
-    heatmap = ax.pcolor(data)
+    ax.pcolor(data)
     print('heatmap calculated')
 
     # ordered_emails = [x[0] for x in sorted(id_map.items(), key=lambda i: i[1])]
