@@ -26,6 +26,11 @@ simple_change_attributes = [
 ]
 
 
+simple_revision_attributes = [
+    '_number',
+]
+
+
 class APITests(unittest.TestCase):
     def setUp(self):
         self.changes = list(
@@ -38,7 +43,6 @@ class APITests(unittest.TestCase):
 
     def test_changes(self):
         for change in self.changes:
-            # TODO: revisions
             # TODO: messages
             # TODO: owner
 
@@ -46,3 +50,18 @@ class APITests(unittest.TestCase):
                 self.assertEqual(
                     getattr(change, name),
                     change.data[name])
+
+    def test_revision_count(self):
+        self.assertEqual(len(list(self.changes[0].revisions)), 2)
+        self.assertEqual(len(list(self.changes[1].revisions)), 3)
+
+    def test_revisions(self):
+        # TODO: commit
+        # TODO: files
+        # fetch
+        for change in self.changes:
+            for revision in change.revisions:
+                for name in simple_revision_attributes:
+                    self.assertEqual(
+                        getattr(revision, name),
+                        revision.data[name])
