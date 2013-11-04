@@ -84,7 +84,8 @@ def fetch_reviewers(change_file,
         try:
             data[c.id] = yapga.fetch_reviewers(conn, c.id)
         except Exception:
-            log.exception('Error fetching reviewers for change {}'.format(c.id))
+            log.exception(
+                'Error fetching reviewers for change {}'.format(c.id))
 
     with open(filename, 'w') as f:
         f.write(json.dumps(data))
@@ -245,5 +246,9 @@ def word_count(changes):
     words = (w for c in changes for m in c.messages for w in m.message.split())
     print(list(words))
 
-if __name__ == '__main__':
+
+def main():
     baker.run()
+
+if __name__ == '__main__':
+    main()

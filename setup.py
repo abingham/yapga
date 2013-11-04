@@ -36,7 +36,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            #'yapga = yapga.app:main',
+            'yapga = yapga.app:main',
         ],
     },
 )
