@@ -181,19 +181,19 @@ def compare_reviewers(changes, reviews):
     changes = list(yapga.util.load_changes(changes))
 
     owner_map = dict(
-        zip(set(c.owner.email for c in changes),
+        zip(set(c.owner.name for c in changes),
             itertools.count()))
 
     reviewer_map = dict(
-        zip(set(r.email for revs in reviews.values() for r in revs),
+        zip(set(r.name for revs in reviews.values() for r in revs),
             itertools.count()))
 
     data = np.zeros((len(reviewer_map), len(owner_map)))
 
     for change in changes:
-        owner_idx = owner_map[change.owner.email]
+        owner_idx = owner_map[change.owner.name]
         for reviewer in reviews.get(change.id, []):
-            reviewer_idx = reviewer_map[reviewer.email]
+            reviewer_idx = reviewer_map[reviewer.name]
             data[(reviewer_idx, owner_idx)] += 1
 
     import matplotlib.pyplot as plt
@@ -218,18 +218,20 @@ def compare_reviewers(changes, reviews):
 
 
 @baker.command
-def changes_vs_reviews(changes, reviews):
-    """Scatter of #changes vs. #reviews for a given user.
+def changes_vs_messages(changes):
+    """Scatter of #changes vs. #messages for a given user.
     """
-    reviews = dict(yapga.util.load_reviews(reviews))
     changes = list(yapga.util.load_changes(changes))
 
     data = collections.defaultdict(lambda: [0, 0])
     for change in changes:
-        data[change.owner.email][0] += 1
-
-    for r in itertools.chain(*reviews.values()):
-        data[r.email][1] += 1
+        data[change.owner.name][0] += 1
+        for message in change.messages:
+            if message.author is not None:
+                data[message.author.name][1] += 1
+            else:
+                log.info('No author information for message {}'.format(
+                    message.id))
 
     import matplotlib.pyplot as plt
     plt.scatter([x[0] for x in data.values()],
