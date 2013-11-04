@@ -279,6 +279,16 @@ def word_count(changes):
         # print(count, '\t', word)
 
 
+@baker.command
+def random_message(changes, size=100):
+    import nltk
+
+    changes = list(yapga.util.load_changes(changes))
+    messages = (m.message for c in changes for m in c.messages)
+    text = nltk.Text([nltk.word_tokenize(msg) for msg in messages])
+    text.generate(100)
+
+
 def main():
     baker.run()
 
