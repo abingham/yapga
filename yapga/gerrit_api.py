@@ -76,12 +76,9 @@ class JSONObject:
         return self.data[name]
 
 
-class Change:
+class Change(JSONObject):
     def __init__(self, data):
         self.data = data
-
-    def __getattr__(self, name):
-        return self.data[name]
 
     @property
     def revisions(self):
