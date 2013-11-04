@@ -247,11 +247,36 @@ def changes_vs_messages(changes):
     plt.show()
 
 
+skip_words = list(itertools.chain(
+    map(str.upper,
+        [
+            'Patch',
+            'Set',
+            'the',
+            'a',
+            'an',
+            'to',
+            'Code-Review+1',
+            'Code-Review+2',
+            'Verified+1',
+            'Verfied',
+        ]),
+    list(map(''.join,
+             itertools.product(map(str, range(10)),
+                               ':.')))))
+
 @baker.command
 def word_count(changes):
     changes = list(yapga.util.load_changes(changes))
-    words = (w for c in changes for m in c.messages for w in m.message.split())
-    print(list(words))
+    word_counts = collections.defaultdict(lambda: 0)
+    for word in filter(lambda x: x.upper() not in skip_words,
+                       (w for c in changes
+                        for m in c.messages
+                        for w in m.message.split())):
+        word_counts[word] += 1
+    for word, count in sorted(word_counts.items(), key=lambda x: x[1]):
+        print(count // 1000 * '*', count, word)
+        # print(count, '\t', word)
 
 
 def main():
