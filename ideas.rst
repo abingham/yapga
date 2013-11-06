@@ -26,3 +26,8 @@ Natural-language analysis
  - generate a typical message using nltk!
    http://www.gilesthomas.com/2010/05/generating-political-news-using-nltk/
    http://stackoverflow.com/questions/1150144/generating-random-sentences-from-custom-text-in-pythons-nlkt
+
+Misc
+----
+
+ - graphml (or whatever) rendering of review dependency graph
