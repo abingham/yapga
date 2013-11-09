@@ -26,17 +26,32 @@ skip_words = list(itertools.chain(
 
 
 @baker.command
-def word_count(changes):
+def word_count(changes, count=20):
     changes = list(yapga.util.load_changes(changes))
     word_counts = collections.defaultdict(lambda: 0)
+
+
+
     for word in filter(lambda x: x.upper() not in skip_words,
                        (w for c in changes
                         for m in c.messages
                         for w in m.message.split())):
         word_counts[word] += 1
-    for word, count in sorted(word_counts.items(), key=lambda x: x[1]):
-        print(count // 1000 * '*', count, word)
-        # print(count, '\t', word)
+
+    words = sorted(word_counts.items(), key=lambda x: x[1])
+    count = min(count, len(words))
+
+    import matplotlib.pyplot as plt
+    plt.bar(range(count),
+            [w[1] for w in words[-count:]])
+    plt.xticks(range(count),
+               [w[0] for w in words[-count:]],
+               rotation='vertical')
+    plt.show()
+
+    # for word, count in sorted(word_counts.items(), key=lambda x: x[1]):
+    #     print(count // 1000 * '*', count, word)
+    #     # print(count, '\t', word)
 
 
 @baker.command
