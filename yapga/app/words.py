@@ -1,5 +1,6 @@
 import collections
 import itertools
+import re
 
 import baker
 
@@ -24,18 +25,24 @@ skip_words = list(itertools.chain(
              itertools.product(map(str, range(10)),
                                ':.')))))
 
+def filter_messages(messages):
+    for m in messages:
+        if re.match('Uploaded patch set \d+.', m):
+            print(m)
+            continue
+        yield m
 
 @baker.command
 def word_count(changes, count=20):
     changes = list(yapga.util.load_changes(changes))
     word_counts = collections.defaultdict(lambda: 0)
-
-
+    messages = filter_messages(m.message
+                               for c in changes
+                               for m in c.messages)
 
     for word in filter(lambda x: x.upper() not in skip_words,
-                       (w for c in changes
-                        for m in c.messages
-                        for w in m.message.split())):
+                       (w for m in messages
+                          for w in m.split())):
         word_counts[word] += 1
 
     words = sorted(word_counts.items(), key=lambda x: x[1])
