@@ -31,7 +31,7 @@ setup(
     install_requires=[
         'baker',
         'matplotlib',
-        'nltk',
+        # 'nltk',  <-- This doesn't work right now for python3.
         'numpy',
     ],
 
