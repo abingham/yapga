@@ -16,7 +16,7 @@ def list_changes(filename):
     """List all of the change-ids in `filename`.
     """
     for c in yapga.util.load_changes(filename):
-        print(c.id)
+        print(c.data)
 
 
 @baker.command
