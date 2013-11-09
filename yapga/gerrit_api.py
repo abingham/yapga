@@ -151,6 +151,8 @@ class ChangeMessage:
         self.message = self.data['message']
         self.revision_number = self.data.get('_revision_number', 0)
 
+    def __str__(self):
+        return self.message
 
 class Revision:
     def __init__(self, change_id, rev_id, data):
