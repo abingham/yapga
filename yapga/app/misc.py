@@ -83,8 +83,8 @@ def changes_by_owner(filename):
 def list_messages(filename):
     "List all of the change messages in a changes file."
     for change in yapga.util.load_changes(filename):
-        print(list(change.messages))
-
+        for msg in change.messages:
+            print(msg)
 
 @baker.command
 def list_reviewers(filename):
