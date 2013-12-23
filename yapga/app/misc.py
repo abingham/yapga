@@ -144,7 +144,7 @@ def compare_reviewers(changes, reviews):
     ax.set_title('Reviewers vs. owners heatmap')
     ax.set_xlabel('Owner')
     ax.set_ylabel('Reviewer')
-    ax.pcolor(data)
+    ax.pcolormesh(data)
 
     def on_click(event):
         own_idx = math.floor(event.xdata)
