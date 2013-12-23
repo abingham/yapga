@@ -117,9 +117,17 @@ class Account:
     def name(self):
         return self.data.get('name', 'UNKNOWN')
 
+    @name.setter
+    def name(self, name):
+        self.data['name'] = name
+
     @property
     def email(self):
         return self.data.get('email', 'UNKNOWN')
+
+    @email.setter
+    def email(self, email):
+        self.data['email'] = email
 
     def __repr__(self):
         return 'Account(name="{}", email="{}")'.format(
