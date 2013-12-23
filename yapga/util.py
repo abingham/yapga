@@ -65,7 +65,7 @@ def index_of(seq, value):
     """
 
     idx = bisect.bisect_left(seq, value)
-    if seq[idx] != value:
+    if idx >= len(seq) or seq[idx] != value:
         raise ValueError(
             '{} not in input sequence.'.format(
                 value))
