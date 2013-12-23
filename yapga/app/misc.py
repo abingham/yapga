@@ -95,7 +95,7 @@ def list_reviewers(filename):
 
 
 @baker.command
-def compare_reviewers(changes, reviews):
+def compare_reviewers(changes, reviews, filter_rate=0.0):
     """Heatmap showing how often reviewers review change owners.
 
     Not very useful right now. Need to weed out the useless,
@@ -108,10 +108,41 @@ def compare_reviewers(changes, reviews):
     reviews = dict(yapga.util.load_reviews(reviews))
     changes = list(yapga.util.load_changes(changes))
 
-    owners = list(sorted(set(
-        c.owner.name for c in changes)))
-    reviewers = list(sorted(set(
-        r.name for revs in reviews.values() for r in revs)))
+    owners = collections.defaultdict(lambda: 0)
+    for change in changes:
+        owners[change.owner.name] += 1
+
+    owners = list(sorted(
+        # Extract just the names from ...
+        x[0] for x in
+
+        # ...the first N (i.e. the people with the most
+        # changes) of...
+        itertools.islice(
+
+            # ...owners dict sorted by number of changes.
+            sorted(owners.items(),
+                   key=lambda x: x[1],
+                   reverse=True),
+            math.ceil((1 - filter_rate) * len(owners)))))
+
+    reviewers = collections.defaultdict(lambda: 0)
+    for revs in reviews.values():
+        for r in revs:
+            reviewers[r.name] += 1
+
+    reviewers = list(sorted(
+        x[0] for x in
+        itertools.islice(
+            sorted(reviewers.items(),
+                   key=lambda x: x[1],
+                   reverse=True),
+            math.ceil((1 - filter_rate) * len(reviewers)))))
+
+    #owners = list(sorted(set(
+    #    c.owner.name for c in changes)))
+    #reviewers = list(sorted(set(
+    #    r.name for revs in reviews.values() for r in revs)))
 
     if not owners:
         print('Owners list is empty. Aborting.')
