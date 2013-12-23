@@ -101,45 +101,58 @@ def compare_reviewers(changes, reviews):
     Not very useful right now. Need to weed out the useless,
     one-offers and stuff.
     """
+    import math
+    import matplotlib.pyplot as plt
+
     # http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
     reviews = dict(yapga.util.load_reviews(reviews))
     changes = list(yapga.util.load_changes(changes))
 
-    owner_map = dict(
-        zip(set(c.owner.name for c in changes),
-            itertools.count()))
+    owners = list(sorted(set(
+        c.owner.name for c in changes)))
+    reviewers = list(sorted(set(
+        r.name for revs in reviews.values() for r in revs)))
 
-    reviewer_map = dict(
-        zip(set(r.name for revs in reviews.values() for r in revs),
-            itertools.count()))
+    if not owners:
+        print('Owners list is empty. Aborting.')
+        return
 
-    data = np.zeros((len(reviewer_map), len(owner_map)))
+    if not reviewers:
+        print('Reviewers list is empty. Aborting.')
+        return
+
+    # This is a matrix of reviewer to owner, where each cell is a
+    # count of how many times a reviewer reviewed a particular owner
+    data = np.zeros((len(reviewers), len(owners)))
 
     for change in changes:
-        owner_idx = owner_map[change.owner.name]
-        for reviewer in reviews.get(change.id, []):
-            reviewer_idx = reviewer_map[reviewer.name]
-            data[(reviewer_idx, owner_idx)] += 1
+        try:
+            owner_idx = yapga.util.index_of(owners, change.owner.name)
 
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
+            for reviewer in reviews.get(change.id, []):
+                try:
+                    reviewer_idx = yapga.util.index_of(reviewers, reviewer.name)
+                    data[(reviewer_idx, owner_idx)] += 1
+                except ValueError:
+                    pass
 
-    print('calculating heatmap...')
+        except ValueError:
+            pass
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
     ax.pcolor(data)
-    print('heatmap calculated')
 
-    # ordered_emails = [x[0] for x in sorted(id_map.items(), key=lambda i: i[1])]
+    def on_click(event):
+        own_idx = math.floor(event.xdata)
+        rev_idx = math.floor(event.ydata)
+        print('reviewer={}, owner={}'.format(
+            reviewers[rev_idx],
+            owners[own_idx]))
 
-    #ax.set_xticklabels(ordered_emails)
-    #ax.set_yticklabels(ordered_emails)
+    fig.canvas.mpl_connect('button_press_event', on_click)
 
     plt.show()
-
-        # try:
-        #     review = reviews[change.id]
-        #     print(review)
-        # except KeyError:
-        #     pass
 
 
 @baker.command
