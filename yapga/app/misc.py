@@ -146,6 +146,7 @@ def compare_reviewers(changes, reviews):
 def changes_vs_messages(changes):
     """Scatter of #changes vs. #messages for a given user.
     """
+
     changes = list(yapga.util.load_changes(changes))
 
     data = collections.defaultdict(lambda: [0, 0])
@@ -158,10 +159,33 @@ def changes_vs_messages(changes):
                 log.info('No author information for message {}'.format(
                     message.id))
 
+    # Turn the data into a list of users, change counts, and review
+    # counts
+    names, change_counts, review_counts = zip(
+        *((i[0], i[1][0], i[1][1])
+          for i in data.items()))
+
     import matplotlib.pyplot as plt
-    plt.title('Changes vs. messages')
-    plt.xlabel('# changes')
-    plt.ylabel('# review messages')
-    plt.scatter([x[0] for x in data.values()],
-                [x[1] for x in data.values()])
+
+    fig = plt.figure()
+    p = fig.add_subplot(111)
+    p.set_title('Changes vs. reviews')
+    p.set_xlabel('# changes')
+    p.set_ylabel('# review messages')
+
+    p.scatter(change_counts,
+              review_counts,
+              picker=5)
+
+    # When a point is clicked, show information about it.
+    def onpick(event):
+        print('==== User stats ====')
+        for ind in event.ind:
+            print('{}, reviews={} messages={}'.format(
+                names[ind],
+                change_counts[ind],
+                review_counts[ind]))
+        print('')
+    fig.canvas.mpl_connect('pick_event', onpick)
+
     plt.show()
