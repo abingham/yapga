@@ -9,6 +9,8 @@ log = logging.getLogger()
 
 class Connection:
     def __init__(self, uri, opener):
+        if uri.endswith('/'):
+            uri = uri[:-1]
         self.uri = uri
         self.opener = opener
 
