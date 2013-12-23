@@ -1,3 +1,4 @@
+import bisect
 import bz2
 import contextlib
 import gzip
@@ -54,3 +55,18 @@ def chunks(it, size):
     it = iter(it)
     while True:
         yield itertools.islice(it, size)
+
+
+def index_of(seq, value):
+    """Find the index of a `value` in a sorted list `seq`.
+
+    Raises:
+        ValueError: `value` is not in `sorted_list`.
+    """
+
+    idx = bisect.bisect_left(seq, value)
+    if seq[idx] != value:
+        raise ValueError(
+            '{} not in input sequence.'.format(
+                value))
+    return idx
