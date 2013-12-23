@@ -159,6 +159,9 @@ def changes_vs_messages(changes):
                     message.id))
 
     import matplotlib.pyplot as plt
+    plt.title('Changes vs. messages')
+    plt.xlabel('# changes')
+    plt.ylabel('# review messages')
     plt.scatter([x[0] for x in data.values()],
                 [x[1] for x in data.values()])
     plt.show()
