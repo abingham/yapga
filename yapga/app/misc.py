@@ -141,6 +141,9 @@ def compare_reviewers(changes, reviews):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    ax.set_title('Reviewers vs. owners heatmap')
+    ax.set_xlabel('Owner')
+    ax.set_ylabel('Reviewer')
     ax.pcolor(data)
 
     def on_click(event):
