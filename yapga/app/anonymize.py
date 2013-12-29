@@ -7,6 +7,10 @@ from yapga.util import open_file
 
 
 def json_transform(obj, t):
+    """Walk OBJ as a mapping or sequence, calling T with each
+    key-value mapping and replacing the values in the data structure
+    with the return values.
+    """
     if isinstance(obj, str):
         return
 
@@ -21,6 +25,9 @@ def json_transform(obj, t):
 
 
 class Replacer:
+    """A callable that fills in TEMPLATE with increasing integer
+    values each time it's called.
+    """
     def __init__(self, template):
         self.template = template
         self.counter = 0
@@ -32,6 +39,9 @@ class Replacer:
 
 @baker.command
 def anonymize_changes(infile, outfile):
+    """Read the changes from INFILE, anonymize names and email
+    addresses, and write the results to OUTFILE.
+    """
     with open_file(infile, 'rt') as f:
         changes = json.loads(f.read())
 
