@@ -1,6 +1,6 @@
 import baker
 
-from . import fetch, misc, words
+from . import anonymize, fetch, misc, words
 
 def main():
     baker.run()

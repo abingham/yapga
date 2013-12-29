@@ -1,49 +1,62 @@
+import collections.abc
 import json
 
 import baker
 
-import yapga.gerrit_api
+from yapga.util import open_file
+
+
+def json_transform(obj, t):
+    if isinstance(obj, str):
+        return
+
+    if isinstance(obj, collections.abc.Mapping):
+        for k, v in obj.items():
+            obj[k] = t(k, v)
+            json_transform(obj[k], t)
+
+    elif isinstance(obj, collections.abc.Sequence):
+        for x in obj:
+            json_transform(x, t)
+
+
+class Replacer:
+    def __init__(self, template):
+        self.template = template
+        self.counter = 0
+
+    def __call__(self):
+        self.counter += 1
+        return self.template.format(self.counter)
 
 
 @baker.command
 def anonymize_changes(infile, outfile):
-    with open(infile, 'rt') as f:
+    with open_file(infile, 'rt') as f:
         changes = json.loads(f.read())
 
-    name_map = {}
-    email_map = {}
+    name_map = collections.defaultdict(
+        Replacer('UNKNOWN_{}'))
+    mail_map = collections.defaultdict(
+        Replacer('UNKNOWN_{}@UNKNOWN.UNK'))
 
-    next_name_id = 0
-    next_email_id = 0
+    def anon(key, value):
+        if not isinstance(value, str):
+            return value
 
-    def next_name():
-        nonlocal next_name_id
+        if key == 'email':
+            return mail_map[value]
 
-        rslt = 'USER{}'.format(next_name_id)
-        next_name_id += 1
+        if key == 'name':
+            return name_map[value]
+
+        return value
+
+    def anon_test(k, v):
+        rslt = anon(k, v)
         return rslt
 
-    def next_email():
-        nonlocal next_email_id
+    json_transform(changes, anon_test)
 
-        rslt = 'ADDRESS{}@UNKNOWN.COM'.format(next_email_id)
-        next_email_id += 1
-        return rslt
-
-    for change in changes:
-        change = yapga.gerrit_api.Change(change)
-        owner_name = change.owner.name
-        if owner_name not in name_map:
-            name_map[owner_name] = next_name()
-
-        owner_email = change.owner.email
-        if owner_email not in email_map:
-            email_map[owner_email] = next_email()
-
-    for change in changes:
-        change = yapga.gerrit_api.Change(change)
-        change.owner.name = name_map[change.owner.name]
-        change.owner.email = email_map[change.owner.email]
-
-    with open(outfile, 'wt') as f:
+    with open_file(outfile, 'wt') as f:
         json.dump(changes, f)
