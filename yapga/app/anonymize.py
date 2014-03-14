@@ -3,7 +3,7 @@ import json
 
 import baker
 
-from yapga.util import open_file
+# from yapga.util import open_file
 
 
 def json_transform(obj, t):

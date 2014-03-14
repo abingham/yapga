@@ -34,7 +34,7 @@ simple_revision_attributes = [
 class APITests(unittest.TestCase):
     def setUp(self):
         self.changes = list(
-            yapga.util.load_changes(
+            yapga.util.all_changes(
                 data_file_path('basic_changes.json')))
 
     def test_smoke_test(self):

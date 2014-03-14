@@ -64,8 +64,13 @@ def filter_words(words):
     return filter(lambda x: x.upper() not in skip_words, words)
 
 @baker.command
-def word_count(changes, count=20):
-    changes = list(yapga.util.load_changes(changes))
+def word_count(dbname,
+               mongo_host=yapga.util.DEFAULT_MONGO_HOST,
+               mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+               count=20):
+    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
+        changes = list(yapga.util.all_changes(db))
+
     word_counts = collections.defaultdict(lambda: 0)
     messages = filter_messages(m.message
                                for c in changes
@@ -92,13 +97,16 @@ def word_count(changes, count=20):
 
 
 @baker.command
-def random_message(changes, size=100):
+def random_message(dbname,
+                   mongo_host=yapga.util.DEFAULT_MONGO_HOST,
+                   mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+                   size=100):
     import nltk
 
-    changes = list(yapga.util.load_changes(changes))
-    messages = filter_messages(m.message
-                               for c in changes
-                               for m in c.messages)
+    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
+        messages = filter_messages(m.message
+                                   for c in yapga.util.all_changes(db)
+                                   for m in c.messages)
     text = nltk.Text(map(nltk.word_tokenize, messages))
     # text = nltk.Text([nltk.word_tokenize(msg) for msg in messages])
     text.generate(100)

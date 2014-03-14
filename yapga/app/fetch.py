@@ -13,7 +13,9 @@ log = logging.getLogger('yapga')
 
 @baker.command
 def fetch(url,
-          filename,
+          dbname,
+          mongo_host=yapga.util.DEFAULT_MONGO_HOST,
+          mongo_port=yapga.util.DEFAULT_MONGO_PORT,
           username=None,
           password=None,
           count=None,
@@ -27,63 +29,74 @@ def fetch(url,
     If `username` and `password` are supplied, then they are used for
     digest authentication with the server.
     """
-    queries = ['q=status:{}'.format(status),
-               'o=ALL_REVISIONS',
-               'o=ALL_FILES',
-               'o=ALL_COMMITS',
-               'o=MESSAGES',
-               'n={}'.format(batch_size)]
+    with yapga.util.get_db(dbname,
+                           mongo_host,
+                           mongo_port) as db:
+        change_coll = db['changes']
 
-    if start_at is not None:
-        queries.append('N={}'.format(start_at))
+        queries = ['q=status:{}'.format(status),
+                   'o=ALL_REVISIONS',
+                   'o=ALL_FILES',
+                   'o=ALL_COMMITS',
+                   'o=MESSAGES',
+                   'n={}'.format(batch_size)]
 
-    if count is not None:
-        count = int(count)
+        if start_at is not None:
+            queries.append('N={}'.format(start_at))
 
-    conn = yapga.create_connection(url, username, password)
-    chunks = yapga.util.chunks(
-        itertools.islice(yapga.fetch_changes(conn, queries=queries),
-                         count),
-        batch_size)
+        if count is not None:
+            count = int(count)
 
-    changes = []
-    try:
-        for chunk in (list(c) for c in chunks):
-            if not chunk:
-                break
-            changes.extend(chunk)
-    except Exception:
-        log.exception(
-            'Error fetching results. Partial results '
-            'will be saved to {}'.format(
-                filename))
-    finally:
-        log.info('{} changes retrieved.'.format(len(changes)))
-        if changes:
-            with open(filename, 'w') as f:
-                f.write(json.dumps(changes))
+        conn = yapga.create_connection(url, username, password)
+        chunks = yapga.util.chunks(
+            itertools.islice(yapga.fetch_changes(conn, queries=queries),
+                             count),
+            batch_size)
+
+        try:
+            for chunk in (list(c) for c in chunks):
+                if not chunk:
+                    break
+                for change in chunk:
+                    # TODO: Should we make replacement optional?
+                    change_coll.update({'change_id': change['change_id']},
+                                       yapga.util.escape_struct(change),
+                                       upsert=True)
+        except Exception:
+            log.exception(
+                'Error fetching results. Partial results saved.')
 
 
 @baker.command
-def fetch_reviewers(change_file,
-                    url,
-                    filename,
+def fetch_reviewers(url,
+                    dbname,
+                    mongo_host=yapga.util.DEFAULT_MONGO_HOST,
+                    mongo_port=yapga.util.DEFAULT_MONGO_PORT,
                     username=None,
                     password=None):
-    """Fetch all reviewers for the changes in `change_file` from `url`. The
-    results are written to `filename` as a json map from change-id to
+    """Fetch all reviewers for the changes in `changes` collection from `url`. The
+    results are written to the `reviewers` collection as a json map from change-id to
     review-list.
     """
 
-    conn = yapga.create_connection(url, username, password)
+    with yapga.util.get_db(dbname,
+                           mongo_host,
+                           mongo_port) as db:
+        rev_coll = db['reviews']
 
-    data = {}
-    for c in yapga.util.load_changes(change_file):
-        try:
-            data[c.id] = yapga.fetch_reviewers(conn, c.id)
-        except Exception:
-            log.exception(
-                'Error fetching reviewers for change {}'.format(c.id))
+        conn = yapga.create_connection(url, username, password)
 
-    with open(filename, 'w') as f:
-        f.write(json.dumps(data))
+        for c in yapga.util.all_changes(db):
+            try:
+                # TODO: Add option for upserting or skipping existing entries
+                if not rev_coll.find({'change_id': c.change_id}).count():
+                    print('Fetching reviewers for change {}'.format(c.change_id))
+                    rev_coll.update({'change_id': c.change_id},
+                                    {'change_id': c.change_id,
+                                     'reviewers': yapga.util.escape_struct(yapga.fetch_reviewers(conn, c.change_id))},
+                                    upsert=True)
+                else:
+                    print('Reviews already found for {}'.format(c.change_id))
+            except Exception:
+                log.exception(
+                    'Error fetching reviewers for change {}'.format(c.change_id))
