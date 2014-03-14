@@ -97,12 +97,11 @@ def list_reviewers(filename):
 @baker.command
 def compare_reviewers(changes, reviews, filter_rate=0.0):
     """Heatmap showing how often reviewers review change owners.
-
-    Not very useful right now. Need to weed out the useless,
-    one-offers and stuff.
     """
     import math
     import matplotlib.pyplot as plt
+
+    filter_rate = float(filter_rate)
 
     # http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
     reviews = dict(yapga.util.load_reviews(reviews))

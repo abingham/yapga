@@ -3,11 +3,12 @@ import itertools
 import re
 
 import baker
+from nltk.corpus import stopwords
 
 import yapga.util
 
 
-skip_words = list(itertools.chain(
+skip_words = set(itertools.chain(
     map(str.upper,
         [
             'Patch',
@@ -25,7 +26,8 @@ skip_words = list(itertools.chain(
         ]),
     list(map(''.join,
              itertools.product(map(str, range(10)),
-                               ':.')))))
+                               ':.'))),
+    stopwords.words('english')))
 
 skip_res = [
     'Uploaded patch set \d+.',
@@ -76,17 +78,17 @@ def word_count(changes, count=20):
     words = sorted(word_counts.items(), key=lambda x: x[1])
     count = min(count, len(words))
 
-    import matplotlib.pyplot as plt
-    plt.bar(range(count),
-            [w[1] for w in words[-count:]])
-    plt.xticks(range(count),
-               [w[0] for w in words[-count:]],
-               rotation='vertical')
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.bar(range(count),
+    #         [w[1] for w in words[-count:]])
+    # plt.xticks(range(count),
+    #            [w[0] for w in words[-count:]],
+    #            rotation='vertical')
+    # plt.show()
 
-    # for word, count in sorted(word_counts.items(), key=lambda x: x[1]):
-    #     print(count // 1000 * '*', count, word)
-    #     # print(count, '\t', word)
+    for word, count in sorted(word_counts.items(), key=lambda x: x[1]):
+        print(count // 1000 * '*', count, word)
+        # print(count, '\t', word)
 
 
 @baker.command
