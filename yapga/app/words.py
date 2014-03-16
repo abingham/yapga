@@ -5,7 +5,7 @@ import re
 import baker
 from nltk.corpus import stopwords
 
-import yapga.util
+import yapga.db
 
 
 skip_words = set(itertools.chain(
@@ -65,11 +65,11 @@ def filter_words(words):
 
 @baker.command
 def word_count(dbname,
-               mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-               mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+               mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+               mongo_port=yapga.db.DEFAULT_MONGO_PORT,
                count=20):
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        changes = list(yapga.util.all_changes(db))
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        changes = list(yapga.db.all_changes(db))
 
     word_counts = collections.defaultdict(lambda: 0)
     messages = filter_messages(m.message
@@ -98,14 +98,14 @@ def word_count(dbname,
 
 @baker.command
 def random_message(dbname,
-                   mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                   mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+                   mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                   mongo_port=yapga.db.DEFAULT_MONGO_PORT,
                    size=100):
     import nltk
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
         messages = filter_messages(m.message
-                                   for c in yapga.util.all_changes(db)
+                                   for c in yapga.db.all_changes(db)
                                    for m in c.messages)
     text = nltk.Text(map(nltk.word_tokenize, messages))
     # text = nltk.Text([nltk.word_tokenize(msg) for msg in messages])

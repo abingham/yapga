@@ -5,6 +5,7 @@ import logging
 import baker
 
 import yapga
+import yapga.db
 import yapga.util
 
 
@@ -14,8 +15,8 @@ log = logging.getLogger('yapga')
 @baker.command
 def fetch(url,
           dbname,
-          mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-          mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+          mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+          mongo_port=yapga.db.DEFAULT_MONGO_PORT,
           username=None,
           password=None,
           count=None,
@@ -29,11 +30,9 @@ def fetch(url,
     If `username` and `password` are supplied, then they are used for
     digest authentication with the server.
     """
-    with yapga.util.get_db(dbname,
+    with yapga.db.get_db(dbname,
                            mongo_host,
                            mongo_port) as db:
-        change_coll = db['changes']
-
         queries = ['q=status:{}'.format(status),
                    'o=ALL_REVISIONS',
                    'o=ALL_FILES',
@@ -58,10 +57,7 @@ def fetch(url,
                 if not chunk:
                     break
                 for change in chunk:
-                    # TODO: Should we make replacement optional?
-                    change_coll.update({'change_id': change['change_id']},
-                                       yapga.util.escape_struct(change),
-                                       upsert=True)
+                    yapga.db.insert_change(db, change)
         except Exception:
             log.exception(
                 'Error fetching results. Partial results saved.')
@@ -70,8 +66,8 @@ def fetch(url,
 @baker.command
 def fetch_reviewers(url,
                     dbname,
-                    mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                    mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+                    mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                    mongo_port=yapga.db.DEFAULT_MONGO_PORT,
                     username=None,
                     password=None):
     """Fetch all reviewers for the changes in `changes` collection from `url`. The
@@ -79,22 +75,20 @@ def fetch_reviewers(url,
     review-list.
     """
 
-    with yapga.util.get_db(dbname,
-                           mongo_host,
-                           mongo_port) as db:
-        rev_coll = db['reviews']
-
+    with yapga.db.get_db(dbname,
+                         mongo_host,
+                         mongo_port) as db:
         conn = yapga.create_connection(url, username, password)
 
-        for c in yapga.util.all_changes(db):
+        for c in yapga.db.all_changes(db):
             try:
-                # TODO: Add option for upserting or skipping existing entries
-                if not rev_coll.find({'change_id': c.change_id}).count():
+                if yapga.util.is_empty(
+                        yapga.db.get_reviewers(db, c.change_id)):
                     print('Fetching reviewers for change {}'.format(c.change_id))
-                    rev_coll.update({'change_id': c.change_id},
-                                    {'change_id': c.change_id,
-                                     'reviewers': yapga.util.escape_struct(yapga.fetch_reviewers(conn, c.change_id))},
-                                    upsert=True)
+                    yapga.db.insert_reviewers(
+                        db,
+                        c.change_id,
+                        yapga.fetch_reviewers(conn, c.change_id))
                 else:
                     print('Reviews already found for {}'.format(c.change_id))
             except Exception:

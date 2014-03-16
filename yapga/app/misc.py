@@ -5,7 +5,7 @@ import logging
 import baker
 import numpy as np
 
-import yapga.util
+import yapga.db
 
 
 log = logging.getLogger('yapga')
@@ -13,29 +13,29 @@ log = logging.getLogger('yapga')
 
 @baker.command
 def list_changes(dbname,
-                 mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                 mongo_port=yapga.util.DEFAULT_MONGO_PORT):
+                 mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                 mongo_port=yapga.db.DEFAULT_MONGO_PORT):
     """List all of the changes in the database `dbname`.
     """
-    with yapga.util.get_db(dbname,
+    with yapga.db.get_db(dbname,
                            mongo_host,
                            mongo_port) as db:
-        for c in yapga.util.all_changes(db):
+        for c in yapga.db.all_changes(db):
             print(c.data)
 
 
 @baker.command
 def rev_size_vs_count(dbname,
-                      mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                      mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+                      mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                      mongo_port=yapga.db.DEFAULT_MONGO_PORT,
                       outfile=None):
     """Log-x scatter of patch size vs. # of commits
     to a review.
     """
     data = []
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        for c in yapga.util.all_changes(db):
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        for c in yapga.db.all_changes(db):
             revs = list(c.revisions)
             if revs:
                 data.append([len(revs), revs[0].size()])
@@ -58,13 +58,13 @@ def rev_size_vs_count(dbname,
 
 @baker.command
 def rev_count_hist(dbname,
-                   mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                   mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+                   mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                   mongo_port=yapga.db.DEFAULT_MONGO_PORT,
                    outfile=None):
     "Histogram of number of revision per change."
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        changes = list(yapga.util.all_changes(db))
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        changes = list(yapga.db.all_changes(db))
 
     log.info('Scanning {} changes'.format(len(changes)))
 
@@ -81,13 +81,13 @@ def rev_count_hist(dbname,
 
 @baker.command
 def changes_by_owner(dbname,
-                     mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                     mongo_port=yapga.util.DEFAULT_MONGO_PORT):
+                     mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                     mongo_port=yapga.db.DEFAULT_MONGO_PORT):
     "Simple histogram of change count by owners."
     counts = {}
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        for change in yapga.util.all_changes(db):
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        for change in yapga.db.all_changes(db):
             o = change.owner.name
             counts[o] = counts.get(o, 0) + 1
 
@@ -98,20 +98,20 @@ def changes_by_owner(dbname,
 
 @baker.command
 def list_messages(dbname,
-                  mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                  mongo_port=yapga.util.DEFAULT_MONGO_PORT):
+                  mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                  mongo_port=yapga.db.DEFAULT_MONGO_PORT):
     "List all of the change messages in a changes file."
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        for change in yapga.util.all_changes(db):
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        for change in yapga.db.all_changes(db):
             for msg in change.messages:
                 print(msg)
 
 
 @baker.command
 def compare_reviewers(dbname,
-                      mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                      mongo_port=yapga.util.DEFAULT_MONGO_PORT,
+                      mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                      mongo_port=yapga.db.DEFAULT_MONGO_PORT,
                       filter_rate=0.0):
     """Heatmap showing how often reviewers review change owners.
     """
@@ -122,9 +122,9 @@ def compare_reviewers(dbname,
 
     # http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        reviews = dict(yapga.util.all_reviewers(db))
-        changes = list(yapga.util.all_changes(db))
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        reviews = dict(yapga.db.all_reviewers(db))
+        changes = list(yapga.db.all_changes(db))
 
     owners = collections.defaultdict(lambda: 0)
     for change in changes:
@@ -211,13 +211,13 @@ def compare_reviewers(dbname,
 
 @baker.command
 def changes_vs_messages(dbname,
-                        mongo_host=yapga.util.DEFAULT_MONGO_HOST,
-                        mongo_port=yapga.util.DEFAULT_MONGO_PORT):
+                        mongo_host=yapga.db.DEFAULT_MONGO_HOST,
+                        mongo_port=yapga.db.DEFAULT_MONGO_PORT):
     """Scatter of #changes vs. #messages for a given user.
     """
 
-    with yapga.util.get_db(dbname, mongo_host, mongo_port) as db:
-        changes = list(yapga.util.all_changes(db))
+    with yapga.db.get_db(dbname, mongo_host, mongo_port) as db:
+        changes = list(yapga.db.all_changes(db))
 
     data = collections.defaultdict(lambda: [0, 0])
     for change in changes:
