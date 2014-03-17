@@ -79,7 +79,12 @@ def rev_count_hist(dbname,
     vals = [len(list(c.revisions)) for c in changes]
 
     import matplotlib.pyplot as plt
-    plt.hist(vals, bins=30)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.hist(vals, bins=30)
+    ax.set_title('Patchset count histogram\ndataset: {}'.format(dbname))
+    ax.set_xlabel('# patchsets in a review')
 
     if outfile:
         plt.savefig(outfile)
