@@ -46,9 +46,17 @@ def rev_size_vs_count(dbname,
     print('corr. coeff:', numpy.corrcoef(data))
 
     import matplotlib.pyplot as plt
-    plt.scatter(data[1], data[0], marker=',')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_title('Revision size vs. commit count\ndataset: {}'.format(dbname))
+    ax.scatter(data[1], data[0], marker=',')
+
+    ax.set_xlim([1, max(data[1])])
+    ax.set_xlabel('Size of change')
+    ax.set_ylim([0, max(data[0])])
+    ax.set_ylabel('Number of patchsets')
     plt.xscale('log')
-    plt.xlim(1, max(data[1]))
+
 
     if outfile:
         plt.savefig(outfile)
