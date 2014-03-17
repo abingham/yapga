@@ -125,7 +125,8 @@ def list_messages(dbname,
 def compare_reviewers(dbname,
                       mongo_host=yapga.db.DEFAULT_MONGO_HOST,
                       mongo_port=yapga.db.DEFAULT_MONGO_PORT,
-                      filter_rate=0.0):
+                      filter_rate=0.0,
+                      outfile=None):
     """Heatmap showing how often reviewers review change owners.
     """
     import math
@@ -203,7 +204,7 @@ def compare_reviewers(dbname,
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set_title('Reviewers vs. owners heatmap')
+    ax.set_title('Reviewers vs. owners heatmap\ndataset: {}'.format(dbname))
     ax.set_xlabel('Owner')
     ax.set_ylabel('Reviewer')
     ax.pcolormesh(data)
@@ -218,6 +219,9 @@ def compare_reviewers(dbname,
             owners[own_idx]))
 
     fig.canvas.mpl_connect('button_press_event', on_click)
+
+    if outfile:
+        plt.savefig(outfile)
 
     plt.show()
 
